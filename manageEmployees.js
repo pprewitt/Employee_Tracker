@@ -6,7 +6,7 @@ var connection = mysql.createConnection({
   host: "localhost",
   port: 3306,
   user: "root",
-  password: "",
+  password: "1891523",
   database: "employees_DB"
 });
 
@@ -29,46 +29,175 @@ const beginQuestions = () => {
       "Add a New Employee",
       "Add a New Department",
       "Add a New Role",
+      "View All Employees by Department",
       "Update an Employee Role",
       "End Application"
     ]
   }).then(answer => {
-  switch (answer.userSelection) {
-    case ("View All Employees"):
-      viewAllEmployees();
-      break;
-    case ("View All Departments"):
-      viewAllDepartments();
-      break;
-    case ("View All Roles"):
-      viewAllRoles();
-      break;
-    case ("Add a New Employee"):
-      addEmployee();
-      break;
-    case ("Add a New Department"):
-      addDepartment();
-      break;
-    case ("Add a New Role"):
-      addRole();
-      break;
-    case ("View All Employees by Department"):
-      viewAllEmployeesByDepartment();
-      break;
-    case ("Update an Employee Role"):
-      updateRole();
-      break;
-    case ("End Application"):
-      console.log("Goodbye!");
-      showLogo();
-      connection.end();
-      break;
-    default:
-      console.log("An error Occurred");
-      connection.end();
-  }
-});
+    switch (answer.userSelection) {
+      case ("View All Employees"):
+        viewAllEmployees();
+        break;
+      case ("View All Departments"):
+        viewAllDepartments();
+        break;
+      case ("View All Roles"):
+        viewAllRoles();
+        break;
+      case ("Add a New Employee"):
+        addEmployee();
+        break;
+      case ("Add a New Department"):
+        addDepartment();
+        break;
+      case ("Add a New Role"):
+        addRole();
+        break;
+      case ("View All Employees by Department"):
+        viewAllEmployeesByDepartment();
+        break;
+      case ("View All Employees by Manager"):
+        viewAllEmployeesByManager();
+        break;
+      case ("Update an Employee Role"):
+        updateRole();
+        break;
+      case ("End Application"):
+        console.log("Goodbye!");
+        showLogo();
+        connection.end();
+        break;
+      default:
+        console.log("An error Occurred");
+        connection.end();
+    }
+  });
 }
+
+function viewAllEmployees() {
+  connection.query("SELECT * FROM employee", function(err, res) {
+    if (err) throw err;
+    // Log all results of the SELECT statement
+    console.table(res);
+    beginQuestions();
+  });
+}
+
+function viewAllDepartments() {
+  connection.query("SELECT * FROM department", function(err, res) {
+    if (err) throw err;
+    // Log all results of the SELECT statement
+    console.table(res);
+    beginQuestions();
+  });
+}
+
+function viewAllRoles() {
+  connection.query("SELECT * FROM roles", function(err, res) {
+    if (err) throw err;
+    // Log all results of the SELECT statement
+    console.table(res);
+    beginQuestions();
+  });
+}
+
+function viewAllEmployeesByDepartment() {
+  connection.query("SELECT employee.id, employee.first_name, employee.last_name, department.name FROM employee LEFT JOIN role on employee.role_id = role.id LEFT JOIN department department on role.department_id = department.id WHERE department.id;",
+      function (error, res) {
+          if (error) throw error
+          console.table(res)
+      })
+      beginQuestions()
+};
+
+function viewAllEmployeesByManager() {
+  connection.query("SELECT employee.id, employee.first_name, employee.last_name, department.name, employee.manager_id AS department, role.title FROM employee LEFT JOIN role on role.id = employee.role_id LEFT JOIN department ON department.id = role.department_id WHERE manager_id;",
+      function (error, res) {
+          if (error) throw error
+          consoleTable(res)
+      })
+      beginQuestions()
+};
+
+updateRole = () => {
+  //pull all the employees first
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err
+
+    //display prompt
+    inquirer.prompt([
+      {
+        type: "list",
+        name: "name",
+        message: "Whose role are you updating?",
+        choices: () => {
+          let employeeArray = [];
+          //push employees into an array to display them
+          for (let i = 0; i < res.length; i++) {
+            employeeArray.push(res[i].first_name + " " + res[i].last_name);
+          }
+          return employeeArray;
+        }
+      },
+
+
+    ])
+      // handle answer
+      .then((answer) => {
+        //split the name up for WHERE clause in query below
+        let fullName = answer.name;
+        console.log(fullName);
+        let splitName = fullName.split(" ");
+
+        connection.query("SELECT * FROM roles", (err, res) => {
+          inquirer.prompt([
+            {
+              type: "list",
+              name: "role",
+              message: "What role would you like to assign?",
+              choices: () => {
+                let roleArray = [];
+                for (let i = 0; i < res.length; i++) {
+                  roleArray.push(res[i].title + " (" + res[i].id + ")");
+                }
+                return roleArray;
+              }
+            }
+
+          ])
+            .then((result) => {
+              let roleID = result.id
+              
+              connection.query(
+                `UPDATE employee SET role_id = "${roleID}" WHERE first_name = "${splitName[0]}" and last_name = "${splitName[1]}"`,
+
+                (err) => {
+                  if (err) throw err;
+                  console.log("added successfully");
+                  // RETURN TO START
+                  beginQuestions();
+                }
+              )
+            })
+        })
+
+      })
+  }
+  )
+}
+// viewAllEmployeesByDepartment()
+
+// addRole()
+
+// addDepartment()
+
+// addEmployee()
+
+// viewAllRoles()
+
+// viewAllDepartments()
+
+// viewAllEmployees()
 
 
 
