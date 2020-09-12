@@ -75,7 +75,7 @@ const beginQuestions = () => {
 }
 
 function viewAllEmployees() {
-  connection.query("SELECT * FROM employee", function(err, res) {
+  connection.query("SELECT * FROM employee", function (err, res) {
     if (err) throw err;
     // Log all results of the SELECT statement
     console.table(res);
@@ -84,7 +84,7 @@ function viewAllEmployees() {
 }
 
 function viewAllDepartments() {
-  connection.query("SELECT * FROM department", function(err, res) {
+  connection.query("SELECT * FROM department", function (err, res) {
     if (err) throw err;
     // Log all results of the SELECT statement
     console.table(res);
@@ -93,7 +93,7 @@ function viewAllDepartments() {
 }
 
 function viewAllRoles() {
-  connection.query("SELECT * FROM roles", function(err, res) {
+  connection.query("SELECT * FROM roles", function (err, res) {
     if (err) throw err;
     // Log all results of the SELECT statement
     console.table(res);
@@ -103,20 +103,20 @@ function viewAllRoles() {
 
 function viewAllEmployeesByDepartment() {
   connection.query("SELECT employee.id, employee.first_name, employee.last_name, department.name FROM employee LEFT JOIN role on employee.role_id = role.id LEFT JOIN department department on role.department_id = department.id WHERE department.id;",
-      function (error, res) {
-          if (error) throw error
-          console.table(res)
-      })
-      beginQuestions()
+    function (error, res) {
+      if (error) throw error
+      console.table(res)
+    })
+  beginQuestions()
 };
 
 function viewAllEmployeesByManager() {
   connection.query("SELECT employee.id, employee.first_name, employee.last_name, department.name, employee.manager_id AS department, role.title FROM employee LEFT JOIN role on role.id = employee.role_id LEFT JOIN department ON department.id = role.department_id WHERE manager_id;",
-      function (error, res) {
-          if (error) throw error
-          consoleTable(res)
-      })
-      beginQuestions()
+    function (error, res) {
+      if (error) throw error
+      consoleTable(res)
+    })
+  beginQuestions()
 };
 
 updateRole = () => {
@@ -158,16 +158,17 @@ updateRole = () => {
               choices: () => {
                 let roleArray = [];
                 for (let i = 0; i < res.length; i++) {
-                  roleArray.push(res[i].title + " (" + res[i].id + ")");
+                  roleArray.push(res[i].title + " |" + res[i].id );
                 }
+                console.log()
                 return roleArray;
               }
             }
 
           ])
-            .then((result) => {
-              let roleID = result.id
+            .then((choice) => {
               
+              let roleID = choice.role.split("|")[1];
               connection.query(
                 `UPDATE employee SET role_id = "${roleID}" WHERE first_name = "${splitName[0]}" and last_name = "${splitName[1]}"`,
 
@@ -185,11 +186,71 @@ updateRole = () => {
   }
   )
 }
-// viewAllEmployeesByDepartment()
 
-// addRole()
 
-// addDepartment()
+addRole = () => {
+  connection.query("SELECT * FROM department", (err, res) => {
+    if (err) throw err
+
+    return inquirer.prompt([
+
+      {
+        type: "input",
+        name: "role",
+        message: "Please name this new role:",
+
+      },
+      {
+        type: "input",
+        name: "salary",
+        message: "Please enter the salary for this role:"
+      },
+      {
+        type: "list",
+        name: "department",
+        message: "What department will this role be in?",
+        choices: () => {
+          let departmentArray = [];
+          for (let i = 0; i < res.length; i++) {
+            departmentArray.push(res[i].dept_name + " |" + res[i].id + ")");
+          }
+          return departmentArray;
+        }
+      }
+    ]).then((choice) => {
+      let deptID = choice.department.split("|")[1];
+
+      connection.query(
+        `INSERT into roles (title) = "${deptID}" , (salary) = "${choice.salary}", `,
+
+        (err) => {
+          if (err) throw err;
+          console.log("added successfully");
+          // RETURN TO START
+          beginQuestions();
+        }
+      )
+    })
+  })
+}
+
+ addDepartment = () =>{
+   inquirer.prompt([
+     {
+       type: "input",
+       name: "departmentName",
+       message: "What is the new department name?"
+     }
+         
+   ]).then((choice) =>{
+     let dept = choice.name
+     connection.query(`INSERT into department (dept_name) = "${dept}" `,  (err, res) => {
+      if (err) throw err;
+      // Log all results of the SELECT statement
+      console.table(res);
+     })
+   }
+ }
 
 // addEmployee()
 
