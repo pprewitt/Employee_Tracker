@@ -73,7 +73,7 @@ const beginQuestions = () => {
         deleteEmployee();
         break;
       case ("Delete a Department"):
-        deleteDepartment();
+        deleteDepartmentQuestions();
         break;
       case ("End Application"):
         console.log("Goodbye!");
@@ -444,7 +444,7 @@ const deleteEmployee = () => {
       {
         type: "list",
         name: "name",
-        message: "Whose role are you updating?",
+        message: "What employee record are you deleting?",
         choices: () => {
           let employeeArray = [];
           //push employees into an array to display them
@@ -475,96 +475,88 @@ const deleteEmployee = () => {
   });
 }
 
-const deleteDepartment = () => {
+const deleteDepartmentQuestions = () => {
+  inquirer.prompt(
+    {
+      name: "delete",
+      type: "list",
+      message: "This action will delete the department and any associated roles and employees, continue?",
+        choices: [
+        "Continue",
+        "Start Over"
+      ]
+    }
+    ).then(answer => {
+      switch (answer.delete) {
+        case ("Start Over"):
+          console.log("");
+          beginQuestions();
+          break;
+        case ("Continue"):
+          deleteDept();
+          break;
+        default:
+          console.log("An error Occurred");
+          beginQuestions();
+      };
+    })
+}
+const deleteDept = () => {
   connection.query(`SELECT * FROM department`, (err, res) => {
     if (err) throw err
-    inquirer.prompt(
+    inquirer.prompt([
       {
         type: "list",
-        name: "whichDept",
-        message: "Which department's roster would you like to view?",
+        name: "name",
+        message: "Which department would you like to delete?",
         choices: () => {
-          let departmentArray = [];
-          //push employees into an array to display them
-          for (let i = 0; i < res.length; i++) {
-            departmentArray.push(res[i].dept_name + " | " + res[i].id);
+            let departmentArray = [];
+            //push employees into an array to display them
+            for (let i = 0; i < res.length; i++) {
+              departmentArray.push(res[i].dept_name + " | " + res[i].id);
+            }
+            return departmentArray;
           }
-          return departmentArray;
-        }
-      }
+  }
+]).then((choice) => {
 
-    ).then((answer) => {
-      let deptID = answer.whichDept.split("|")[1];
-      connection.query(`SELECT COUNT (employee.id)  FROM employee LEFT JOIN roles ON employee.role_id = roles.id RIGHT JOIN department ON roles.department_id = department.id WHERE department.id = "${deptID}" ;`,
-        function (err, res) {
-          if (err) throw err;
-          console.log(res)
-          if (count === 0) {
-            connection.query(
-              `DELETE FROM department WHERE department.id = ${deptID} `,
-              (err) => {
-                if (err) throw err;
-              }
-            )
-            console.log("No Employees are assigned roles in this department, department has been deleted");
-            console.log("");
-            beginQuestions();
-          }
-          else {
-            connection.query(`SELECT employee.id, employee.first_name, employee.last_name, roles.title FROM employee LEFT JOIN roles ON employee.role_id = roles.id RIGHT JOIN department ON roles.department_id = department.id WHERE department.id = "${deptID}";`,
-              function (err, res) {
-                if (err) throw err
+  let deptID = choice.name.split("|")[1];
+  connection.query(
+    `DELETE employee, roles, department FROM employee LEFT JOIN roles ON employee.role_id = roles.id  RIGHT JOIN department ON roles.department_id = department.id WHERE department.id = "${deptID}";`,
 
-                else {
-                  inquirer.prompt(
-                    {
-                      type: "list",
-                      name: "reassign",
-                      message: "The following employees will need to be assigned roles in other departments:",
-                      choices: () => {
-                        let eeByDeptArray = [];
-                        //push employees into an array to display them
-                        for (let i = 0; i < res.length; i++) {
-                          eeByDeptArray.push(res[i].first_name + res[i].first_name + res[i].title + " | " + res[i].id);
-                        }
-                        return eeByDeptArray;
-                      }
-                    }
-
-                  )
-                }
-                //here for loop to delete
-              })
-          }
-          // console.log("")
-          // beginQuestions();
-        })
+    (err) => {
+      if (err) throw err;
+      console.log("Department deleted successfully");
+      // RETURN TO START
+      console.log("");
+      beginQuestions();
     }
-    )
-  })
+  )
+})
+})
 }
 
 const showLogo = () => {
-  console.log("");
-  console.log("");
-  console.log('8888888888                        888                                     ');
-  console.log('888                               888                                     ');
-  console.log('888                               888                                     ');
-  console.log('8888888    88888b.d88b.  88888b.  888  .d88b.  888  888  .d88b.   .d88b.  ');
-  console.log('888        888 "888 "88b 888 "88b 888 d88""88b 888  888 d8P  Y8b d8P  Y8b ');
-  console.log('888        888  888  888 888  888 888 888  888 888  888 88888888 88888888 ');
-  console.log('888        888  888  888 888 d88P 888 Y88..88P Y88b 888 Y8b.     Y8b.     ');
-  console.log('8888888888 888  888  888 88888P"  888  "Y88P"   "Y88888  "Y8888   "Y8888  ');
-  console.log('                         888                        888                   ');
-  console.log('                         888                   Y8b d88P                   ');
-  console.log('                         888                    "Y88P"                    ');
-  console.log('888888888                          888                                    ');
-  console.log('   888                             888                                    ');
-  console.log('   888                             888                                    ');
-  console.log('   888  88bd88b.  8888b.   .d88b.  888   88  .d88b.   88bd88b.            ');
-  console.log('   888  888   Y8      88b d88  Y8  888  88  d8P  Y8b  888   Y8            ');
-  console.log('   888  888      .d888888 888      88888    88888888  888                 ');
-  console.log('   888  888      888  888 Y88.  Y8 888  88  Y8b.      888                 ');
-  console.log('   888  888      "Y888888  "Y88P"  888   88  "Y8888   888                 ');
-  console.log("");
-};
+    console.log("");
+    console.log("");
+    console.log('8888888888                        888                                     ');
+    console.log('888                               888                                     ');
+    console.log('888                               888                                     ');
+    console.log('8888888    88888b.d88b.  88888b.  888  .d88b.  888  888  .d88b.   .d88b.  ');
+    console.log('888        888 "888 "88b 888 "88b 888 d88""88b 888  888 d8P  Y8b d8P  Y8b ');
+    console.log('888        888  888  888 888  888 888 888  888 888  888 88888888 88888888 ');
+    console.log('888        888  888  888 888 d88P 888 Y88..88P Y88b 888 Y8b.     Y8b.     ');
+    console.log('8888888888 888  888  888 88888P"  888  "Y88P"   "Y88888  "Y8888   "Y8888  ');
+    console.log('                         888                        888                   ');
+    console.log('                         888                   Y8b d88P                   ');
+    console.log('                         888                    "Y88P"                    ');
+    console.log('888888888                          888                                    ');
+    console.log('   888                             888                                    ');
+    console.log('   888                             888                                    ');
+    console.log('   888  88bd88b.  8888b.   .d88b.  888   88  .d88b.   88bd88b.            ');
+    console.log('   888  888   Y8      88b d88  Y8  888  88  d8P  Y8b  888   Y8            ');
+    console.log('   888  888      .d888888 888      88888    88888888  888                 ');
+    console.log('   888  888      888  888 Y88.  Y8 888  88  Y8b.      888                 ');
+    console.log('   888  888      "Y888888  "Y88P"  888   88  "Y8888   888                 ');
+    console.log("");
+  };
