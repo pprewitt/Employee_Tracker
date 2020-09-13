@@ -29,7 +29,7 @@ const beginQuestions = () => {
       "Add a New Employee",
       "Add a New Department",
       "Add a New Role",
-      "View All Employees by Department",
+      "View All Employees by Department (with salaries and dept budget)",
       "Update an Employee Role",
       "End Application"
     ]
@@ -53,7 +53,7 @@ const beginQuestions = () => {
       case ("Add a New Role"):
         addRole();
         break;
-      case ("View All Employees by Department"):
+      case ("View All Employees by Department (with salaries and dept budget)"):
         viewAllEmployeesByDepartment();
         break;
       case ("View All Employees by Manager"):
@@ -79,6 +79,7 @@ const viewAllEmployees = () => {
     if (err) throw err;
     // Log all results of the SELECT statement
     console.table(res);
+    console.log("");
     beginQuestions();
   });
 }
@@ -88,6 +89,7 @@ const viewAllDepartments = () => {
     if (err) throw err;
     // Log all results of the SELECT statement
     console.table(res);
+    console.log("");
     beginQuestions();
   });
 }
@@ -97,6 +99,7 @@ const viewAllRoles = () => {
     if (err) throw err;
     // Log all results of the SELECT statement
     console.table(res);
+    console.log("");
     beginQuestions();
   });
 }
@@ -155,6 +158,8 @@ const addEmployee = () => {
             // Log all results of the SELECT statement
             console.log(`${answer.firstName} ${answer.lastName}  has been added to the team! Welcome Aboard!`);
           })
+          console.log("");
+          beginQuestions();
         })
       })
     })
@@ -176,6 +181,8 @@ const addDepartment = () => {
       // Log all results of the SELECT statement
       console.log(`${dept} has been added to departments!`);
     })
+    console.log("")
+    beginQuestions();
   })
 }
 
@@ -218,6 +225,7 @@ const addRole = () => {
           if (err) throw err;
           console.log("added successfully");
           // RETURN TO START
+          console.log("")
           beginQuestions();
         }
       )
@@ -226,22 +234,52 @@ const addRole = () => {
 }
 
 function viewAllEmployeesByDepartment() {
-  connection.query("SELECT employee.id, employee.first_name, employee.last_name, department.name FROM employee LEFT JOIN role on employee.role_id = role.id LEFT JOIN department department on role.department_id = department.id WHERE department.id;",
-    function (error, res) {
-      if (error) throw error
-      console.table(res)
+  connection.query(`SELECT * FROM department`, (err, res) => {
+    if (err) throw err
+    inquirer.prompt(
+      {
+        type: "list",
+        name: "whichDept",
+        message: "Which department's roster would you like to view?",
+        choices: () => {
+          let departmentArray = [];
+          //push employees into an array to display them
+          for (let i = 0; i < res.length; i++) {
+            departmentArray.push(res[i].dept_name + " | " + res[i].id);
+          }
+          return departmentArray;
+        }
+      }
+
+    ).then((answer) => {
+      let deptID = answer.whichDept.split("|")[1];
+      connection.query(`SELECT employee.id, employee.first_name, employee.last_name, roles.salary FROM employee LEFT JOIN roles ON employee.role_id = roles.id RIGHT JOIN department department ON roles.department_id = department.id WHERE department.id = "${deptID}";`,
+        function (err, res) {
+          if (err) throw err
+          console.table(res)
+          let deptBudget = 0;
+          res.forEach(employee => {
+            deptBudget += parseInt(employee.salary)
+          });
+          console.log(`Total Dept Budget: ${deptBudget}`)
+        })
+      console.log("")
+      beginQuestions();
     })
-  beginQuestions()
-};
+  }
+  )
+
+}
 
 function viewAllEmployeesByManager() {
   connection.query("SELECT employee.id, employee.first_name, employee.last_name, department.name, employee.manager_id AS department, role.title FROM employee LEFT JOIN role on role.id = employee.role_id LEFT JOIN department ON department.id = role.department_id WHERE manager_id;",
-    function (error, res) {
-      if (error) throw error
-      consoleTable(res)
+    function (err, res) {
+      if (err) throw err
+      console.log(res)
     })
-  beginQuestions()
-};
+  console.log("");
+  beginQuestions();
+}
 
 const updateRole = () => {
   //pull all the employees first
@@ -300,6 +338,7 @@ const updateRole = () => {
                   if (err) throw err;
                   console.log("added successfully");
                   // RETURN TO START
+                  console.log("");
                   beginQuestions();
                 }
               )
@@ -310,10 +349,6 @@ const updateRole = () => {
   }
   )
 }
-
-
-
-
 
 const showLogo = () => {
   console.log("");
