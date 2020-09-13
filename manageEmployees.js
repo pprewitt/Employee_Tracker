@@ -35,6 +35,7 @@ const beginQuestions = () => {
       "Update an Employee's Manager",
       "Delete Employee Record",
       "Delete a Department",
+      "Delete a Role",
       "End Application"
     ]
   }).then(answer => {
@@ -74,6 +75,9 @@ const beginQuestions = () => {
         break;
       case ("Delete a Department"):
         deleteDepartmentQuestions();
+        break;
+      case ("Delete a Role"):
+        deleteRoleQuestions();
         break;
       case ("End Application"):
         console.log("Goodbye!");
@@ -481,26 +485,27 @@ const deleteDepartmentQuestions = () => {
       name: "delete",
       type: "list",
       message: "This action will delete the department and any associated roles and employees, continue?",
-        choices: [
+      choices: [
         "Continue",
         "Start Over"
       ]
     }
-    ).then(answer => {
-      switch (answer.delete) {
-        case ("Start Over"):
-          console.log("");
-          beginQuestions();
-          break;
-        case ("Continue"):
-          deleteDept();
-          break;
-        default:
-          console.log("An error Occurred");
-          beginQuestions();
-      };
-    })
+  ).then(answer => {
+    switch (answer.delete) {
+      case ("Start Over"):
+        console.log("");
+        beginQuestions();
+        break;
+      case ("Continue"):
+        deleteDept();
+        break;
+      default:
+        console.log("An error Occurred");
+        beginQuestions();
+    };
+  })
 }
+
 const deleteDept = () => {
   connection.query(`SELECT * FROM department`, (err, res) => {
     if (err) throw err
@@ -510,53 +515,115 @@ const deleteDept = () => {
         name: "name",
         message: "Which department would you like to delete?",
         choices: () => {
-            let departmentArray = [];
-            //push employees into an array to display them
-            for (let i = 0; i < res.length; i++) {
-              departmentArray.push(res[i].dept_name + " | " + res[i].id);
-            }
-            return departmentArray;
+          let departmentArray = [];
+          //push employees into an array to display them
+          for (let i = 0; i < res.length; i++) {
+            departmentArray.push(res[i].dept_name + " | " + res[i].id);
           }
-  }
-]).then((choice) => {
+          return departmentArray;
+        }
+      }
+    ]).then((choice) => {
 
-  let deptID = choice.name.split("|")[1];
-  connection.query(
-    `DELETE employee, roles, department FROM employee LEFT JOIN roles ON employee.role_id = roles.id  RIGHT JOIN department ON roles.department_id = department.id WHERE department.id = "${deptID}";`,
+      let deptID = choice.name.split("|")[1];
+      connection.query(
+        `DELETE employee, roles, department FROM employee LEFT JOIN roles ON employee.role_id = roles.id  RIGHT JOIN department ON roles.department_id = department.id WHERE department.id = "${deptID}";`,
 
-    (err) => {
-      if (err) throw err;
-      console.log("Department deleted successfully");
-      // RETURN TO START
-      console.log("");
-      beginQuestions();
+        (err) => {
+          if (err) throw err;
+          console.log("Department deleted successfully");
+          // RETURN TO START
+          console.log("");
+          beginQuestions();
+        }
+      )
+    })
+  })
+}
+
+const deleteRoleQuestions = () => {
+  inquirer.prompt(
+    {
+      name: "delete",
+      type: "list",
+      message: "This action will delete the role and any associated employees, continue?",
+      choices: [
+        "Continue",
+        "Start Over"
+      ]
     }
-  )
-})
-})
+  ).then(answer => {
+    switch (answer.delete) {
+      case ("Start Over"):
+        console.log("");
+        beginQuestions();
+        break;
+      case ("Continue"):
+        deleteRole();
+        break;
+      default:
+        console.log("An error Occurred");
+        beginQuestions();
+    };
+  })
+}
+
+const deleteRole = () => {
+  connection.query(`SELECT * FROM roles`, (err, res) => {
+    if (err) throw err
+    inquirer.prompt([
+      {
+        type: "list",
+        name: "name",
+        message: "Which role would you like to delete?",
+        choices: () => {
+          let roleArray = [];
+          //push employees into an array to display them
+          for (let i = 0; i < res.length; i++) {
+            roleArray.push(res[i].title + " | " + res[i].id);
+          }
+          return roleArray;
+        }
+      }
+    ]).then((choice) => {
+
+      let roleID = choice.name.split("|")[1];
+      connection.query(
+        `DELETE employee, roles FROM employee LEFT JOIN roles ON employee.role_id = roles.id  WHERE roles.id = "${roleID}";`,
+
+        (err) => {
+          if (err) throw err;
+          console.log("Role deleted successfully");
+          // RETURN TO START
+          console.log("");
+          beginQuestions();
+        }
+      )
+    })
+  })
 }
 
 const showLogo = () => {
-    console.log("");
-    console.log("");
-    console.log('8888888888                        888                                     ');
-    console.log('888                               888                                     ');
-    console.log('888                               888                                     ');
-    console.log('8888888    88888b.d88b.  88888b.  888  .d88b.  888  888  .d88b.   .d88b.  ');
-    console.log('888        888 "888 "88b 888 "88b 888 d88""88b 888  888 d8P  Y8b d8P  Y8b ');
-    console.log('888        888  888  888 888  888 888 888  888 888  888 88888888 88888888 ');
-    console.log('888        888  888  888 888 d88P 888 Y88..88P Y88b 888 Y8b.     Y8b.     ');
-    console.log('8888888888 888  888  888 88888P"  888  "Y88P"   "Y88888  "Y8888   "Y8888  ');
-    console.log('                         888                        888                   ');
-    console.log('                         888                   Y8b d88P                   ');
-    console.log('                         888                    "Y88P"                    ');
-    console.log('888888888                          888                                    ');
-    console.log('   888                             888                                    ');
-    console.log('   888                             888                                    ');
-    console.log('   888  88bd88b.  8888b.   .d88b.  888   88  .d88b.   88bd88b.            ');
-    console.log('   888  888   Y8      88b d88  Y8  888  88  d8P  Y8b  888   Y8            ');
-    console.log('   888  888      .d888888 888      88888    88888888  888                 ');
-    console.log('   888  888      888  888 Y88.  Y8 888  88  Y8b.      888                 ');
-    console.log('   888  888      "Y888888  "Y88P"  888   88  "Y8888   888                 ');
-    console.log("");
-  };
+  console.log("");
+  console.log("");
+  console.log('8888888888                        888                                     ');
+  console.log('888                               888                                     ');
+  console.log('888                               888                                     ');
+  console.log('8888888    88888b.d88b.  88888b.  888  .d88b.  888  888  .d88b.   .d88b.  ');
+  console.log('888        888 "888 "88b 888 "88b 888 d88""88b 888  888 d8P  Y8b d8P  Y8b ');
+  console.log('888        888  888  888 888  888 888 888  888 888  888 88888888 88888888 ');
+  console.log('888        888  888  888 888 d88P 888 Y88..88P Y88b 888 Y8b.     Y8b.     ');
+  console.log('8888888888 888  888  888 88888P"  888  "Y88P"   "Y88888  "Y8888   "Y8888  ');
+  console.log('                         888                        888                   ');
+  console.log('                         888                   Y8b d88P                   ');
+  console.log('                         888                    "Y88P"                    ');
+  console.log('888888888                          888                                    ');
+  console.log('   888                             888                                    ');
+  console.log('   888                             888                                    ');
+  console.log('   888  88bd88b.  8888b.   .d88b.  888   88  .d88b.   88bd88b.            ');
+  console.log('   888  888   Y8      88b d88  Y8  888  88  d8P  Y8b  888   Y8            ');
+  console.log('   888  888      .d888888 888      88888    88888888  888                 ');
+  console.log('   888  888      888  888 Y88.  Y8 888  88  Y8b.      888                 ');
+  console.log('   888  888      "Y888888  "Y88P"  888   88  "Y8888   888                 ');
+  console.log("");
+};
