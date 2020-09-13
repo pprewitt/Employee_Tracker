@@ -474,8 +474,7 @@ const deleteEmployee = () => {
         }
       )
     })
-    console.log("");
-    beginQuestions();
+    
   });
 }
 
